@@ -163,6 +163,7 @@ class ParticipantController extends Controller
 // 1. Tampilkan Halaman Setting
     public function settings()
     {
+        return view('peserta.settings');
     }
 
     // 2. Proses Update Profil (Nama, Email, Avatar)
