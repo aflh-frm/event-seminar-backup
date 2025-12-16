@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\FrontController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\EventController;
@@ -33,6 +34,11 @@ Route::get('/', function () {
     return view('welcome', compact('events'));
 });
 
+// Halaman Depan & Detail
+Route::get('/', [FrontController::class, 'index'])->name('front.index');
+Route::get('/event/{id}', [FrontController::class, 'show'])->name('front.details');
+
+
 // 2. Logic Pengalihan Dashboard (Redirect setelah Login)
 Route::get('/dashboard', function () {
     $user = Auth::user();
@@ -44,7 +50,7 @@ Route::get('/dashboard', function () {
     if ($user->role === 'admin') return redirect()->route('admin.dashboard');
     if ($user->role === 'eo') return redirect()->route('eo.dashboard');
     
-    return redirect()->route('user.dashboard');
+    return redirect()->route('peserta.dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 
@@ -128,13 +134,26 @@ Route::middleware(['auth', 'role:eo'])->prefix('eo')->name('eo.')->group(functio
 // ====================================================
 // GRUP 3: Khusus PESERTA (User)
 // ====================================================
-Route::middleware(['auth', 'role:user'])->prefix('user')->name('user.')->group(function () {
-    Route::get('/dashboard', function () {
-        return view('user.dashboard'); 
-    })->name('dashboard');
+Route::middleware(['auth', 'role:user'])->prefix('peserta')->name('peserta.')->group(function () {
     
-    // Nanti taruh route booking tiket disini
-});
+    // Dashboard
+    Route::get('/dashboard', [\App\Http\Controllers\ParticipantController::class, 'dashboard'])->name('dashboard');
+
+    // Tiket Saya
+    Route::get('/my-tickets', [\App\Http\Controllers\ParticipantController::class, 'tickets'])->name('tickets');
+
+    // Checkout
+    Route::get('/checkout/{id}', [\App\Http\Controllers\ParticipantController::class, 'checkout'])->name('checkout');
+    Route::post('/checkout/{id}', [\App\Http\Controllers\ParticipantController::class, 'store'])->name('store');
+
+    // Cetak E-Tiket
+    Route::get('/ticket/download/{id}', [ParticipantController::class, 'downloadTicket'])
+        ->name('ticket.download');
+    
+    });
+
+    // Halaman Jelajah / Pencarian Event
+    Route::get('/explore', [FrontController::class, 'explore'])->name('front.explore');
 
 
 // ====================================================

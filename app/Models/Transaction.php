@@ -14,6 +14,8 @@ class Transaction extends Model
         'event_id',
         'payment_proof',
         'status',
+        'total_price',
+        'transaction_date',
     ];
 
     // Relasi: Transaksi milik siapa?

@@ -2,16 +2,23 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Event;
 use App\Models\Transaction;
+use App\Models\Bank;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Barryvdh\DomPDF\Facade\Pdf;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class ParticipantController extends Controller
 {
+    // ================================================
+    // BAGIAN 1: KHUSUS EO (PANITIA) - VALIDASI PESERTA
+    // ================================================
+
     // 1. Menampilkan Daftar Peserta (Hanya untuk event milik EO tersebut)
     public function index()
     {
-        // Logika: Ambil transaksi dimana event-nya dibuat oleh EO yang sedang login
         $transactions = Transaction::with(['user', 'event'])
             ->whereHas('event', function($query) {
                 $query->where('user_id', Auth::id());
@@ -27,7 +34,6 @@ class ParticipantController extends Controller
     {
         $transaction = Transaction::findOrFail($id);
         
-        // Pastikan event ini milik EO yang login (Keamanan)
         if ($transaction->event->user_id != Auth::id()) {
             abort(403);
         }
@@ -42,7 +48,6 @@ class ParticipantController extends Controller
     {
         $transaction = Transaction::findOrFail($id);
         
-        // Keamanan
         if ($transaction->event->user_id != Auth::id()) {
             abort(403);
         }
@@ -50,5 +55,105 @@ class ParticipantController extends Controller
         $transaction->update(['status' => 'rejected']);
 
         return redirect()->back()->with('error', 'Peserta ditolak.');
+    }
+
+
+    // ===================================================
+    // BAGIAN 2: KHUSUS PESERTA (USER) - DASHBOARD & TIKET
+    // ===================================================
+
+    // 4. DASHBOARD UTAMA (Ringkasan Statistik) - UPDATE
+    public function dashboard()
+    {
+        $userId = Auth::id();
+
+        // Hitung Statistik
+        $totalTickets = Transaction::where('user_id', $userId)->count();
+        $activeTickets = Transaction::where('user_id', $userId)->where('status', 'confirmed')->count();
+        $pendingTickets = Transaction::where('user_id', $userId)->where('status', 'pending')->count();
+        
+        // Ambil 3 tiket terbaru saja untuk preview
+        $recentTickets = Transaction::with('event')
+                                    ->where('user_id', $userId)
+                                    ->latest()
+                                    ->take(3)
+                                    ->get();
+
+        return view('peserta.dashboard', compact('totalTickets', 'activeTickets', 'pendingTickets', 'recentTickets'));
+    }
+
+    // 5. HALAMAN TIKET SAYA (Daftar Lengkap) - BARU
+    public function tickets()
+    {
+        $transactions = Transaction::with('event')
+                                   ->where('user_id', Auth::id())
+                                   ->latest()
+                                   ->get();
+
+        return view('peserta.tickets', compact('transactions'));
+    }
+
+    // 6. Form Checkout (Pendaftaran) - UPDATE REDIRECT
+    public function checkout($id)
+    {
+        $event = Event::with('user')->findOrFail($id);
+
+        // Cek apakah user sudah pernah daftar?
+        $existing = Transaction::where('user_id', Auth::id())
+                               ->where('event_id', $id)
+                               ->first();
+
+        // Jika sudah, lempar ke halaman Tiket Saya (bukan dashboard lagi)
+        if ($existing) {
+            return redirect()->route('peserta.tickets')->with('error', 'Kamu sudah terdaftar di event ini!');
+        }
+
+        $eo_id = $event->user_id;
+        $banks = Bank::where('user_id', $eo_id)->get();
+
+        return view('peserta.checkout', compact('event', 'banks'));
+    }
+
+    // 7. Proses Simpan Pendaftaran - UPDATE REDIRECT
+    public function store(Request $request, $id)
+    {
+        $request->validate([
+            'payment_proof' => 'required|image|mimes:jpeg,png,jpg|max:2048',
+            'bank_id' => 'required'
+        ]);
+
+        $event = Event::findOrFail($id);
+        $path = $request->file('payment_proof')->store('payments', 'public');
+
+        Transaction::create([
+            'user_id' => Auth::id(),
+            'event_id' => $id,
+            'transaction_date' => now(),
+            'status' => 'pending',
+            'payment_proof' => $path,
+            'total_price' => $event->price,
+        ]);
+
+        // Redirect ke halaman Tiket Saya setelah sukses
+        return redirect()->route('peserta.tickets')->with('success', 'Pendaftaran berhasil! Cek status tiket Anda.');
+    }
+    public function downloadTicket($id)
+    {
+        // 1. Ambil Data Transaksi
+        $transaction = Transaction::with(['event', 'user'])->where('user_id', Auth::id())->findOrFail($id);
+
+        // 2. Pastikan Statusnya Confirmed (Aktif)
+        if ($transaction->status != 'confirmed') {
+            return back()->with('error', 'Tiket belum aktif!');
+        }
+
+        // 3. Generate QR Code (Gambar)
+        $qrcode = base64_encode(QrCode::format('svg')->size(200)->generate($transaction->id . '-' . $transaction->user->email));
+
+        // 4. Load View PDF
+        $pdf = Pdf::loadView('peserta.pdf_ticket', compact('transaction', 'qrcode'));
+        
+        // 5. Download File
+        return $pdf->download('E-Ticket EventPro - ' . $transaction->event->title . '.pdf');
     }
 }

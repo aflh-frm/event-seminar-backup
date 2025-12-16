@@ -13,12 +13,14 @@ return new class extends Migration
     {
         Schema::create('transactions', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained(); // Peserta
-            $table->foreignId('event_id')->constrained(); // Event yang didaftar
+            $table->foreignId('user_id')->constrained()->onDelete('cascade'); // Peserta
+            $table->foreignId('event_id')->constrained()->onDelete('cascade'); // Event
+            $table->date('transaction_date');
             $table->string('payment_proof')->nullable(); // Bukti transfer
             
             // Status bayar: 'pending', 'confirmed', 'rejected'
             $table->enum('status', ['pending', 'confirmed', 'rejected'])->default('pending');
+            $table->decimal('total_price', 12, 2)->default(0);
             $table->timestamps();
         });
     }
