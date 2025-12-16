@@ -21,7 +21,6 @@
                     </a>
                     
                     <div class="hidden md:flex gap-6 text-sm font-medium">
-                        
                         <a href="{{ route('front.explore') }}" 
                         class="{{ request()->routeIs('front.explore') ? 'text-blue-600 font-bold' : 'text-gray-500 hover:text-blue-600' }} transition">
                             Cari Event
@@ -43,17 +42,17 @@
                         <div class="text-xs text-blue-500 font-medium">Peserta</div>
                     </div>
 
-                    <div class="h-10 w-10 rounded-full bg-gray-200 overflow-hidden border border-gray-300">
+                    <a href="{{ route('peserta.settings') }}" title="Pengaturan Akun" class="h-10 w-10 rounded-full bg-gray-200 overflow-hidden border border-gray-300 hover:ring-2 hover:ring-blue-500 transition cursor-pointer block">
                         @if(Auth::user()->avatar)
                             <img src="{{ asset('storage/' . Auth::user()->avatar) }}" class="h-full w-full object-cover">
                         @else
                             <img src="https://ui-avatars.com/api/?name={{ urlencode(Auth::user()->name) }}&background=random" class="h-full w-full object-cover">
                         @endif
-                    </div>
+                    </a>
 
                     <form method="POST" action="{{ route('logout') }}">
                         @csrf
-                        <button type="submit" class="text-gray-400 hover:text-red-600 transition ml-2">
+                        <button type="submit" class="text-gray-400 hover:text-red-600 transition ml-2" title="Keluar">
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
                         </button>
                     </form>

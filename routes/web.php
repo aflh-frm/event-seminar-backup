@@ -149,8 +149,13 @@ Route::middleware(['auth', 'role:user'])->prefix('peserta')->name('peserta.')->g
     // Cetak E-Tiket
     Route::get('/ticket/download/{id}', [ParticipantController::class, 'downloadTicket'])
         ->name('ticket.download');
+
+    // PENGATURAN PROFIL
+    Route::get('/settings', [ParticipantController::class, 'settings'])->name('settings');
+    Route::put('/settings/profile', [ParticipantController::class, 'updateProfile'])->name('settings.profile');
+    Route::put('/settings/password', [ParticipantController::class, 'updatePassword'])->name('settings.password');
     
-    });
+});
 
     // Halaman Jelajah / Pencarian Event
     Route::get('/explore', [FrontController::class, 'explore'])->name('front.explore');

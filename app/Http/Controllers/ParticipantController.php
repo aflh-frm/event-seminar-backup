@@ -9,6 +9,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Barryvdh\DomPDF\Facade\Pdf;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
+
 
 class ParticipantController extends Controller
 {
@@ -155,5 +158,67 @@ class ParticipantController extends Controller
         
         // 5. Download File
         return $pdf->download('E-Ticket EventPro - ' . $transaction->event->title . '.pdf');
+    }
+
+// 1. Tampilkan Halaman Setting
+    public function settings()
+    {
+    }
+
+    // 2. Proses Update Profil (Nama, Email, Avatar)
+    public function updateProfile(Request $request)
+    {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email,' . $user->id,
+            'avatar' => 'nullable|image|mimes:jpeg,png,jpg|max:2048', // Max 2MB
+        ]);
+
+        // Update Data Dasar
+        $user->name = $request->name;
+        $user->email = $request->email;
+
+        // Cek jika ada upload foto baru
+        if ($request->hasFile('avatar')) {
+            // Hapus foto lama jika ada (bukan foto default)
+            if ($user->avatar && Storage::disk('public')->exists($user->avatar)) {
+                Storage::disk('public')->delete($user->avatar);
+            }
+
+            // Simpan foto baru
+            $path = $request->file('avatar')->store('avatars', 'public');
+            $user->avatar = $path;
+        }
+
+        $user->save(); // Simpan ke database
+
+        return back()->with('success', 'Profil berhasil diperbarui!');
+    }
+
+    // 3. Proses Ganti Password
+    public function updatePassword(Request $request)
+    {
+        $request->validate([
+            'current_password' => 'required',
+            'password' => 'required|min:8|confirmed',
+        ]);
+
+        // Cek apakah password lama benar
+        if (!Hash::check($request->current_password, Auth::user()->password)) {
+            return back()->withErrors(['current_password' => 'Password lama salah!']);
+        }
+
+        // Update Password
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+
+        $user->update([
+            'password' => Hash::make($request->password)
+        ]);
+
+        return back()->with('success', 'Password berhasil diubah!');
     }
 }
