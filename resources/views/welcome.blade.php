@@ -73,9 +73,6 @@
                 <h2 class="text-3xl font-bold text-slate-900">Event Terbaru</h2>
                 <p class="text-slate-500 mt-2">Jangan lewatkan kesempatan emas minggu ini.</p>
             </div>
-            <a href="{{ route('front.explore') }}" class="hidden md:flex items-center gap-1 text-blue-600 font-bold hover:underline">
-                Lihat Semua <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
-            </a>
         </div>
         
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
