@@ -5,7 +5,7 @@
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
     <div class="flex justify-between items-center mb-8">
         <h1 class="text-2xl font-bold text-gray-900">Tiket Saya</h1>
-        <a href="/" class="bg-blue-600 text-white px-5 py-2 rounded-lg font-bold hover:bg-blue-700 transition">
+        <a href="{{ route('front.explore') }}" class="bg-blue-600 text-white px-5 py-2 rounded-lg font-bold hover:bg-blue-700 transition">
             + Cari Event
         </a>
     </div>

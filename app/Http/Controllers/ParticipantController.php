@@ -96,19 +96,21 @@ class ParticipantController extends Controller
         return view('peserta.tickets', compact('transactions'));
     }
 
-    // 6. Form Checkout (Pendaftaran) - UPDATE REDIRECT
+// 6. Form Checkout (Pendaftaran)
     public function checkout($id)
     {
         $event = Event::with('user')->findOrFail($id);
 
-        // Cek apakah user sudah pernah daftar?
+        // Cek transaksi TERAKHIR user di event ini
         $existing = Transaction::where('user_id', Auth::id())
                                ->where('event_id', $id)
+                               ->latest() // PENTING: Ambil yang paling baru
                                ->first();
 
-        // Jika sudah, lempar ke halaman Tiket Saya (bukan dashboard lagi)
-        if ($existing) {
-            return redirect()->route('peserta.tickets')->with('error', 'Kamu sudah terdaftar di event ini!');
+        // Redirect hanya jika transaksi ada DAN statusnya BUKAN rejected.
+        // Jadi kalau statusnya 'rejected', dia akan lolos dari if ini (bisa daftar lagi).
+        if ($existing && $existing->status != 'rejected') {
+            return redirect()->route('peserta.tickets')->with('warning', 'Kamu sudah terdaftar (Pending/Aktif) di event ini!');
         }
 
         $eo_id = $event->user_id;
@@ -117,7 +119,7 @@ class ParticipantController extends Controller
         return view('peserta.checkout', compact('event', 'banks'));
     }
 
-    // 7. Proses Simpan Pendaftaran - UPDATE REDIRECT
+    // 7. Proses Simpan Pendaftaran
     public function store(Request $request, $id)
     {
         $request->validate([
