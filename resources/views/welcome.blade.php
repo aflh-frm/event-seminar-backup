@@ -154,7 +154,6 @@
                     <h4 class="text-white font-bold mb-4">Menu</h4>
                     <ul class="space-y-2 text-sm">
                         <li><a href="/" class="hover:text-blue-400 transition">Beranda</a></li>
-                        <li><a href="{{ route('front.explore') }}" class="hover:text-blue-400 transition">Jelajah Event</a></li>
                         <li><a href="{{ route('login') }}" class="hover:text-blue-400 transition">Masuk / Daftar</a></li>
                     </ul>
                 </div>
@@ -166,7 +165,7 @@
                             <span>📧</span> support@eventpro.id
                         </li>
                         <li class="flex items-center gap-2">
-                            <span>📱</span> +62 812 3456 7890
+                            <span>📱</span> +62 823 9199 7185
                         </li>
                     </ul>
                 </div>
